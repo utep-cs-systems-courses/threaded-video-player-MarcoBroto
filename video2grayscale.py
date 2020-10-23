@@ -1,29 +1,29 @@
 #! python3.8
 
 from threading import Thread, Semaphore
-import sys, cv2 as cv
+import cv2 as cv
 
 
 class BlockingQueue(): # Blocking Queue implemented with list; less ops/sec
 	def __init__(self, max_size=10):
-		self._queue_sema = Semaphore(max_size) # Tracks num of available incoming items
-		self._dequeue_sema = Semaphore(0) # Tracks num of available outgoing items
-		self._items = []
+		self.__queue_sema = Semaphore(max_size) # Tracks num of available incoming items
+		self.__dequeue_sema = Semaphore(0) # Tracks num of available outgoing items
+		self.__items = []
 
 	def get(self):
-		self._dequeue_sema.acquire() # Remove spot for outgoing items
-		if len(self._items):
-			val = self._items.pop(0)
-			self._queue_sema.release() # Add spot for incoming items
+		self.__dequeue_sema.acquire() # Remove spot for outgoing items
+		if len(self.__items):
+			val = self.__items.pop(0)
+			self.__queue_sema.release() # Add spot for incoming items
 			return val
 		else: return None
 
 	def put(self, value):
-		self._queue_sema.acquire() # Remove spot from incoming items
-		self._items.append(value)
-		self._dequeue_sema.release() # Add spot for outgoing items
+		self.__queue_sema.acquire() # Remove spot from incoming items
+		self.__items.append(value)
+		self.__dequeue_sema.release() # Add spot for outgoing items
 
-	def getSize(self): return len(self._items)
+	def getSize(self): return len(self.__items)
 
 
 default_file = 'clip.mp4' # Path to video file
@@ -31,7 +31,7 @@ frame_delay = 1 # Delay after rendering frames
 QUEUE_SIZE = 10 # Number of elements a queue can hold at one time
 
 extractQueue, displayQueue = BlockingQueue(QUEUE_SIZE), BlockingQueue(QUEUE_SIZE)
-complete = False # Global flag for determining if no frames left in video
+complete = False # Global flag for determining if frames are left in video
 
 
 def extractFrames(filePath):
@@ -81,4 +81,4 @@ if __name__ == '__main__':
 		Thread(target=extractFrames, args=[default_file], name='Extract Frames Thread', daemon=True).start() # Helper thread
 		Thread(target=convertFramesToGrayscale, name='Convert To Grayscale Thread', daemon=True).start() # Helper thread
 		displayFrames() # Main thread
-	except KeyboardInterrupt: sys.exit(1)
+	except KeyboardInterrupt: exit()
